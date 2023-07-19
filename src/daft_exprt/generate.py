@@ -450,7 +450,8 @@ def extract_reference_parameters(audio_ref, output_dir, hparams):
         wav, fs = librosa.load(audio_ref, sr=hparams.sampling_rate)
         wav = rescale_wav_to_float32(wav)
         # get log pitch
-        pitch = extract_pitch(wav, fs, hparams)
+        # pitch = extract_pitch(wav, fs, hparams)
+        pitch = extract_pitch(wav, hparams)
         # extract mel-spectrogram
         mel_spec = mel_spectrogram_HiFi(wav, hparams)
         # get energy

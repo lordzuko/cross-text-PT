@@ -15,6 +15,10 @@ from shutil import rmtree
 
 from librosa.filters import mel as librosa_mel_fn
 from scipy.io import wavfile
+<<<<<<< HEAD
+=======
+import pyworld as pw
+>>>>>>> 4e8c990 (adding pyworld)
 
 from daft_exprt.symbols import ascii, eos, punctuation, SIL_WORD_SYMBOL, whitespace
 from daft_exprt.utils import launch_multi_process
@@ -219,55 +223,72 @@ def update_markers(file_name, lines, sentence, sent_begin, int_durations, hparam
         return None
 
 
-def extract_pitch(wav, fs, hparams):
-    ''' Extract pitch frames from audio using REAPER binary
+# def extract_pitch(wav, fs, hparams):
+#     ''' Extract pitch frames from audio using REAPER binary
+#         Convert pitch to log scale and set unvoiced values to 0.
+#     '''
+#     # REAPER asks for int16 audios
+#     # audio is in float32
+#     wav = wav * 32768.0
+#     wav = wav.astype('int16')
+#     # save audio file locally
+#     rand_name = str(uuid.uuid4())
+#     out_dir = os.path.join(TMP_DIR, 'reaper')
+#     os.makedirs(out_dir, exist_ok=True)
+#     wav_file = os.path.join(out_dir, f'{rand_name}.wav')
+#     wavfile.write(wav_file, fs, wav)
+    
+#     # extract pitch values
+#     f0_file = wav_file.replace('.wav', '.f0')
+#     process = ['reaper', '-i', f'{wav_file}',
+#                '-a', '-f', f'{f0_file}',
+#                '-e', f'{hparams.f0_interval}',
+#                '-m', f'{hparams.min_f0}',
+#                '-x', f'{hparams.max_f0}',
+#                '-u', f'{hparams.uv_interval}',
+#                '-w', f'{hparams.uv_cost}']
+#     with open(os.devnull, 'wb') as devnull:
+#         subprocess.check_call(process, stdout=devnull, stderr=subprocess.STDOUT)
+#     # read PCM file
+#     with open(f0_file, 'rb') as f:
+#         buf = f.read()
+#         pitch = np.frombuffer(buf, dtype='int16')
+#     # extract unvoiced indexes
+#     pitch = np.copy(pitch)
+#     uv_idxs = np.where(pitch <= 0.)[0]
+#     # put to log scale
+#     pitch[uv_idxs] = 1000.
+#     pitch = np.log(pitch)
+#     # set unvoiced values to 0.
+#     pitch[uv_idxs] = 0.
+#     # extract pitch for each mel-spec frame
+#     pitch_frames = pitch[::hparams.hop_length]
+#     # edge case
+#     if len(pitch) % hparams.hop_length == 0:
+#         pitch_frames = np.append(pitch_frames, pitch[-1])
+#     # delete files
+#     os.remove(wav_file)
+#     os.remove(f0_file)
+    
+#     return pitch_frames
+
+def extract_pitch(wav, hparams):
+    ''' Extract pitch frames from audio using pyworld
         Convert pitch to log scale and set unvoiced values to 0.
     '''
-    # REAPER asks for int16 audios
-    # audio is in float32
-    wav = wav * 32768.0
-    wav = wav.astype('int16')
-    # save audio file locally
-    rand_name = str(uuid.uuid4())
-    out_dir = os.path.join(TMP_DIR, 'reaper')
-    os.makedirs(out_dir, exist_ok=True)
-    wav_file = os.path.join(out_dir, f'{rand_name}.wav')
-    wavfile.write(wav_file, fs, wav)
-    
-    # extract pitch values
-    f0_file = wav_file.replace('.wav', '.f0')
-    process = ['reaper', '-i', f'{wav_file}',
-               '-a', '-f', f'{f0_file}',
-               '-e', f'{hparams.f0_interval}',
-               '-m', f'{hparams.min_f0}',
-               '-x', f'{hparams.max_f0}',
-               '-u', f'{hparams.uv_interval}',
-               '-w', f'{hparams.uv_cost}']
-    with open(os.devnull, 'wb') as devnull:
-        subprocess.check_call(process, stdout=devnull, stderr=subprocess.STDOUT)
-    # read PCM file
-    with open(f0_file, 'rb') as f:
-        buf = f.read()
-        pitch = np.frombuffer(buf, dtype='int16')
-    # extract unvoiced indexes
-    pitch = np.copy(pitch)
-    uv_idxs = np.where(pitch <= 0.)[0]
-    # put to log scale
+    pitch, t = pw.dio(
+        wav,
+        hparams.sampling_rate,
+        frame_period=hparams.hop_length / hparams.sampling_rate * 1000,
+    )
+    pitch = pw.stonemask(wav, pitch, t, hparams.sampling_rate)
+    uv_idxs = np.where(pitch <= 0.)
     pitch[uv_idxs] = 1000.
     pitch = np.log(pitch)
     # set unvoiced values to 0.
     pitch[uv_idxs] = 0.
-    # extract pitch for each mel-spec frame
-    pitch_frames = pitch[::hparams.hop_length]
-    # edge case
-    if len(pitch) % hparams.hop_length == 0:
-        pitch_frames = np.append(pitch_frames, pitch[-1])
-    # delete files
-    os.remove(wav_file)
-    os.remove(f0_file)
-    
-    return pitch_frames
 
+    return pitch
 
 def get_symbols_pitch(pitch, markers):
     ''' Compute mean pitch per symbol
