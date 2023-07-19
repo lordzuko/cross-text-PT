@@ -15,10 +15,7 @@ from shutil import rmtree
 
 from librosa.filters import mel as librosa_mel_fn
 from scipy.io import wavfile
-<<<<<<< HEAD
-=======
 import pyworld as pw
->>>>>>> 4e8c990 (adding pyworld)
 
 from daft_exprt.symbols import ascii, eos, punctuation, SIL_WORD_SYMBOL, whitespace
 from daft_exprt.utils import launch_multi_process
