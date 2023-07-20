@@ -6,6 +6,7 @@ import uuid
 import tgt
 
 from shutil import move, rmtree
+from pathlib import Path
 
 from daft_exprt.cleaners import text_cleaner
 from daft_exprt.symbols import MFA_SIL_WORD_SYMBOL, MFA_SIL_PHONE_SYMBOLS, MFA_UNK_WORD_SYMBOL, \
@@ -201,19 +202,19 @@ def mfa(dataset_dir, hparams, n_jobs):
             _logger.info('Preparing MFA corpus')
             prepare_corpus(corpus_dir, language)
             
-            # # uncomment if you need to validate your corpus before MFA alignment
-            # # validate corpuses to ensure there are no issues with the data format
-            # _logger.info('Validating corpus')
-            # tmp_dir = os.path.join(temp_dir, 'validate')
-            # os.system(f'mfa validate {corpus_dir} {dictionary} '
-            #           f'{acoustic_model} -t {tmp_dir} -j {n_jobs}')
-            # # use a G2P model to generate a pronunciation dictionary for unknown words
-            # # this can later be added manually to the dictionary
-            # oovs = os.path.join(tmp_dir, os.path.basename(speaker), 'corpus_data', 'oovs_found.txt')
-            # if os.path.isfile(oovs):
-            #     _logger.info('Generating transcriptions for unknown words')
-            #     oovs_trans = os.path.join(corpus_dir, 'oovs_transcriptions.txt')
-            #     os.system(f'mfa g2p {g2p_model} {oovs} {oovs_trans}')
+            # uncomment if you need to validate your corpus before MFA alignment
+            # validate corpuses to ensure there are no issues with the data format
+            _logger.info('Validating corpus')
+            tmp_dir = os.path.join(temp_dir, 'validate')
+            os.system(f'mfa validate {corpus_dir} {dictionary} '
+                      f'{acoustic_model} -t {tmp_dir} -j {n_jobs}')
+            # use a G2P model to generate a pronunciation dictionary for unknown words
+            # this can later be added manually to the dictionary
+            oovs = os.path.join(tmp_dir, os.path.basename(speaker), 'corpus_data', 'oovs_found.txt')
+            if os.path.isfile(oovs):
+                _logger.info('Generating transcriptions for unknown words')
+                oovs_trans = os.path.join(corpus_dir, 'oovs_transcriptions.txt')
+                os.system(f'mfa g2p {g2p_model} {oovs} {oovs_trans}')
             
             # perform forced alignment with a pretrained acoustic model
             _logger.info('Performing forced alignment using a pretrained model')
@@ -223,7 +224,8 @@ def mfa(dataset_dir, hparams, n_jobs):
             
             # extract word/phone alignment markers from .TextGrid files
             _logger.info('Extracting markers')
-            text_grid_dir = os.path.join(align_out_dir, 'wavs')
+            text_grid_dir = os.path.join(corpus_dir, 'TextGrid')
+            # Path(text_grid_dir).mkdir(parents=True, exist_ok=True)
             assert(os.path.isdir(text_grid_dir)), _logger.error(f'There is no such dir {text_grid_dir}')
             all_files = [x for x in os.listdir(text_grid_dir)]
             launch_multi_process(iterable=all_files, func=move_file, n_jobs=n_jobs,

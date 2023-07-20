@@ -23,7 +23,8 @@ from daft_exprt.utils import chunker, launch_multi_process, plot_2d_data
 
 _logger = logging.getLogger(__name__)
 FILE_ROOT = os.path.dirname(os.path.realpath(__file__))
-
+FILE_ROOT = os.path.join(FILE_ROOT, "log")
+os.makedirs(FILE_ROOT, exist_ok=True)
 
 def phonemize_sentence(sentence, hparams, log_queue):
     ''' Phonemize sentence using MFA

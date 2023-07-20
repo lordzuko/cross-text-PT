@@ -43,6 +43,23 @@ def format_LJ_speech(lj_args):
         f.writelines(metadata_lines)
     _logger.info('Done!')
 
+def format_BC2013(bc2013_args):
+    ''' Format BC2013 data set
+        Only metadata.csv needs to be modified
+    '''
+    # read metadata lines
+    _logger.info('Formatting BC2013 Speech')
+    metadata = os.path.join(bc2013_args.data_set_dir, 'metadata.csv')
+    assert(os.path.isfile(metadata)), _logger.error(f'There is no such file {metadata}')
+    with open(metadata, 'r', encoding='utf-8') as f:
+        metadata_lines = f.readlines()
+    # create new metadata.csv
+    metadata_lines = [line.strip().split(sep='|') for line in metadata_lines]
+    metadata_lines = [f'{line[0]}|{line[1]}\n' for line in metadata_lines]
+    with open(metadata, 'w', encoding='utf-8') as f:
+        f.writelines(metadata_lines)
+    _logger.info('Done!')
+
 
 def format_ESD(esd_args):
     ''' Format ESD data set
@@ -95,6 +112,9 @@ if __name__ == '__main__':
     
     parser_LJ = subparsers.add_parser('LJ', help='format LJ data set')
     parser_LJ.set_defaults(func=format_LJ_speech)
+
+    parser_BC2013 = subparsers.add_parser('BC2013', help='format BC2013 data set')
+    parser_BC2013.set_defaults(func=format_BC2013)
     
     parser_ESD = subparsers.add_parser('ESD', help='format emotional speech dataset from Zhou et al.')
     parser_ESD.set_defaults(func=format_ESD)

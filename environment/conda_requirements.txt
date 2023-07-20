@@ -3,4 +3,4 @@ baumwelch
 ngram
 openblas
 openfst
-pynini
+pynini==2.1.4

@@ -158,37 +158,39 @@ def generate_benchmark_sentences(model, hparams, output_dir):
     :param hparams:         hyper-params used for training/synthesis
     :param output_dir:      directory to store synthesized files
     '''
-    # set random speaker id
-    speaker_id = random.choice(hparams.speakers_id)
-    # choose reference for style transfer
-    with open(hparams.validation_files, 'r', encoding='utf-8') as f:
-        references = [line.strip().split('|') for line in f]
-    reference = random.choice(references)
-    reference_path, file_name = reference[0], reference[1]
-    speaker_name = [speaker for speaker in hparams.speakers if reference_path.endswith(speaker)][0]
-    audio_ref = f'{os.path.join(hparams.data_set_dir, speaker_name, "wavs", file_name)}.wav'
-    # display info
-    _logger.info('\nGenerating benchmark sentences with the following parameters:')
-    _logger.info(f'speaker_id = {speaker_id}')
-    _logger.info(f'audio_ref = {audio_ref}\n')
-    
-    # prepare benchmark sentences
-    n_jobs = get_nb_jobs('max')
-    text_file = os.path.join(hparams.benchmark_dir, hparams.language, 'sentences.txt')
-    sentences, file_names = \
-        prepare_sentences_for_inference(text_file, output_dir, hparams, n_jobs)
-    # extract reference prosody parameters
-    extract_reference_parameters(audio_ref, output_dir, hparams)
-    # duplicate reference parameters
-    file_name = os.path.basename(audio_ref).replace('.wav', '')
-    refs = [os.path.join(output_dir, f'{file_name}.npz') for _ in range(len(sentences))]
-    # generate mel_specs and audios with Griffin-Lim
-    speaker_ids = [speaker_id for _ in range(len(sentences))]
-    generate_mel_specs(model, sentences, file_names, speaker_ids, refs,
-                       output_dir, hparams, use_griffin_lim=True)
-    # copy audio ref
-    copyfile(audio_ref, os.path.join(output_dir, f'{file_name}.wav'))
-
+    try:
+        # set random speaker id
+        speaker_id = random.choice(hparams.speakers_id)
+        # choose reference for style transfer
+        with open(hparams.validation_files, 'r', encoding='utf-8') as f:
+            references = [line.strip().split('|') for line in f]
+        reference = random.choice(references)
+        reference_path, file_name = reference[0], reference[1]
+        speaker_name = [speaker for speaker in hparams.speakers if reference_path.endswith(speaker)][0]
+        audio_ref = f'{os.path.join(hparams.data_set_dir, speaker_name, "wavs", file_name)}.wav'
+        # display info
+        _logger.info('\nGenerating benchmark sentences with the following parameters:')
+        _logger.info(f'speaker_id = {speaker_id}')
+        _logger.info(f'audio_ref = {audio_ref}\n')
+        
+        # prepare benchmark sentences
+        n_jobs = get_nb_jobs('max')
+        text_file = os.path.join(hparams.benchmark_dir, hparams.language, 'sentences.txt')
+        sentences, file_names = \
+            prepare_sentences_for_inference(text_file, output_dir, hparams, n_jobs)
+        # extract reference prosody parameters
+        extract_reference_parameters(audio_ref, output_dir, hparams)
+        # duplicate reference parameters
+        file_name = os.path.basename(audio_ref).replace('.wav', '')
+        refs = [os.path.join(output_dir, f'{file_name}.npz') for _ in range(len(sentences))]
+        # generate mel_specs and audios with Griffin-Lim
+        speaker_ids = [speaker_id for _ in range(len(sentences))]
+        generate_mel_specs(model, sentences, file_names, speaker_ids, refs,
+                        output_dir, hparams, use_griffin_lim=True)
+        # copy audio ref
+        copyfile(audio_ref, os.path.join(output_dir, f'{file_name}.wav'))
+    except Exception as e:
+        _logger.error(e)
 
 def validate(gpu, model, criterion, val_loader, hparams):
     ''' Handles all the validation scoring and printing

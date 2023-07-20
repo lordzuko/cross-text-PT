@@ -79,7 +79,7 @@ def pre_process(pre_process_args):
     # perform alignment using MFA
     mfa(data_set_dir, hparams, nb_jobs)
     
-    # copy metadata.csv
+    # # copy metadata.csv
     for speaker in hparams.speakers:
         spk_features_dir = os.path.join(features_dir, speaker)
         os.makedirs(spk_features_dir, exist_ok=True)
@@ -88,12 +88,15 @@ def pre_process(pre_process_args):
         assert(os.path.isfile(metadata_src)), _logger.error(f'There is no such file: {metadata_src}')
         copyfile(metadata_src, metadata_dst)
     
-    # extract features
+    # # extract features
     extract_features(data_set_dir, features_dir, hparams, nb_jobs)
     # create train and valid sets
+    _logger.info("FEATURE EXTRACTION COMPLETED")
     create_sets(features_dir, hparams, pre_process_args.proportion_validation)
+    _logger.info("DATASETS CREATION COMPLETED")
     # extract features stats on the training set
     stats = extract_features_stats(hparams, nb_jobs)
+    _logger.info("STATS CALCULATED")
     with open(stats_file, 'w') as f:
         json.dump(stats, f, indent=4, sort_keys=True)
 
@@ -102,6 +105,7 @@ def train(train_args):
     ''' Train Daft-Exprt on the pre-processed data sets
     '''
     # launch training in distributed mode or not
+    os.makedirs(os.path.join(output_directory, 'logs'), exist_ok=True)
     training_script = os.path.join(PROJECT_ROOT, 'src', 'daft_exprt', 'train.py')
     process = ['python', f'{training_script}',
                '--data_set_dir', f'{data_set_dir}',
@@ -136,7 +140,7 @@ if __name__ == '__main__':
                         help='directory name where all pre-process, training and fine-tuning outputs will be stored')
     parser.add_argument('-dd', '--data_set_dir', type=str,
                         help='path to the directory containing speakers data sets')
-    parser.add_argument('-spks', '--speakers', nargs='*', default=[],
+    parser.add_argument('-spks', '--speakers', nargs='*', default=["CB"],
                         help='speakers to use for training. '
                              'If [], finds all speakers contained in data_set_dir')
     parser.add_argument('-lg', '--language', type=str, default='english',

@@ -61,9 +61,9 @@ class HyperParams(object):
         self.cudnn_deterministic = True  # parameter used when initializing training
         self.dist_backend = 'nccl'  # parameter used to perform distributed training
         self.nb_iterations = 370000  # total number of iterations to perform during training
-        self.iters_per_checkpoint = 10000  # number of iterations between successive checkpoints
-        self.iters_check_for_model_improvement = 5000  # number of iterations between successive evaluation on the validation set
-        self.batch_size = 16  # batch size per GPU card
+        self.iters_per_checkpoint = 5000  # number of iterations between successive checkpoints
+        self.iters_check_for_model_improvement = 1000 # number of iterations between successive evaluation on the validation set
+        self.batch_size = 8  # batch size per GPU card
         self.accumulation_steps = 3  # number of iterations before updating model parameters (gradient accumulation)
         self.checkpoint = ''  # checkpoint to use to restart training at a specific place
         

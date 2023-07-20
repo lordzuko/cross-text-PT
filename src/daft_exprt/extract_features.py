@@ -273,19 +273,22 @@ def extract_pitch(wav, hparams):
     ''' Extract pitch frames from audio using pyworld
         Convert pitch to log scale and set unvoiced values to 0.
     '''
-    pitch, t = pw.dio(
-        wav,
-        hparams.sampling_rate,
-        frame_period=hparams.hop_length / hparams.sampling_rate * 1000,
-    )
-    pitch = pw.stonemask(wav, pitch, t, hparams.sampling_rate)
-    uv_idxs = np.where(pitch <= 0.)
-    pitch[uv_idxs] = 1000.
-    pitch = np.log(pitch)
-    # set unvoiced values to 0.
-    pitch[uv_idxs] = 0.
+    try:
+        pitch, t = pw.dio(
+            wav.astype(np.float64),
+            hparams.sampling_rate,
+            frame_period=hparams.hop_length / hparams.sampling_rate * 1000,
+        )
+        pitch = pw.stonemask(wav.astype(np.float64), pitch, t, hparams.sampling_rate)
+        uv_idxs = np.where(pitch <= 0.)
+        pitch[uv_idxs] = 1000.
+        pitch = np.log(pitch)
+        # set unvoiced values to 0.
+        pitch[uv_idxs] = 0.
 
-    return pitch
+        return pitch
+    except Exception as e:
+        _logger.error(e)
 
 def get_symbols_pitch(pitch, markers):
     ''' Compute mean pitch per symbol
@@ -470,6 +473,7 @@ def _extract_features(files, features_dir, hparams, log_queue):
         markers = update_markers(file_name, lines, sentence, sent_begin, int_durations, hparams, logger)
         
         if markers is not None:
+            
             # save mel-spectrogram -- (n_mel_channels, T)
             np.save(os.path.join(features_dir, f'{file_name}.npy'), mel_spec)
             
@@ -496,7 +500,7 @@ def _extract_features(files, features_dir, hparams, log_queue):
                 f.writelines(symbols_energy)
             
             # extract log pitch for each mel-spec frame
-            frames_pitch = extract_pitch(wav, fs, hparams)
+            frames_pitch = extract_pitch(wav, hparams)
             assert(len(frames_pitch) == nb_mel_spec_frames), logger.error(f'{markers_file} -- ({len(frames_pitch)}, {nb_mel_spec_frames})')
             # save frames pitch values
             pitch_file = os.path.join(features_dir, f'{file_name}.frames_f0')
