@@ -10,6 +10,7 @@ from torch.nn.parameter import Parameter
 
 from daft_exprt.extract_features import duration_to_integer
 
+gpu_avail = torch.cuda.is_available()
 
 def get_mask_from_lengths(lengths):
     ''' Create a masked tensor from given lengths
@@ -19,7 +20,10 @@ def get_mask_from_lengths(lengths):
     :return mask: torch.tensor of size (B, max_length) -- the masked tensor
     '''
     max_len = torch.max(lengths)
-    ids = torch.arange(0, max_len).cuda(lengths.device, non_blocking=True).long()
+    if gpu_avail:
+        ids = torch.arange(0, max_len).cuda(lengths.device, non_blocking=True).long()
+    else:
+        ids = torch.arange(0, max_len).long()
     mask = (ids < lengths.unsqueeze(1)).bool()
     return mask
 
@@ -136,7 +140,10 @@ class PositionalEncoding(nn.Module):
         # initialize tensor
         nb_frames_max = torch.max(torch.cumsum(x, dim=1))
         pos_emb = torch.FloatTensor(x.size(0), nb_frames_max, self.embed_dim).zero_()  # (B, nb_frames_max, embed_dim)
-        pos_emb = pos_emb.cuda(x.device, non_blocking=True).float()  # (B, nb_frames_max, embed_dim)
+        if gpu_avail:
+            pos_emb = pos_emb.cuda(x.device, non_blocking=True).float()  # (B, nb_frames_max, embed_dim)
+        else:
+            pos_emb = pos_emb.float()  # (B, nb_frames_max, embed_dim)
         
         # can be used for absolute or relative positioning
         for line_idx in range(x.size(0)):
@@ -648,7 +655,10 @@ class GaussianUpsamplingModule(nn.Module):
         # create frames idx tensor
         nb_frames_max = torch.max(cumsum)  # T_max
         frames_idx = torch.FloatTensor([i + 0.5 for i in range(nb_frames_max)])  # (T_max, )
-        frames_idx = frames_idx.cuda(x.device, non_blocking=True).float()  # (T_max, )
+        if gpu_avail:
+            frames_idx = frames_idx.cuda(x.device, non_blocking=True).float()  # (T_max, )
+        else:
+            frames_idx = frames_idx.float()  # (T_max, )
         # compute probs
         probs = torch.exp(gaussians.log_prob(frames_idx))  # (B, L_max, T_max)
         # apply mask to set probs out of sequence length to 0
@@ -732,18 +742,31 @@ class DaftExprt(nn.Module):
             frames_energy, frames_pitch, mel_specs, output_lengths, speaker_ids, feature_dirs, feature_files = batch
         
         # transfer tensors to specified GPU
-        symbols = symbols.cuda(gpu, non_blocking=True).long()                        # (B, L_max)
-        durations_float = durations_float.cuda(gpu, non_blocking=True).float()       # (B, L_max)
-        durations_int = durations_int.cuda(gpu, non_blocking=True).long()            # (B, L_max)
-        symbols_energy = symbols_energy.cuda(gpu, non_blocking=True).float()         # (B, L_max)
-        symbols_pitch = symbols_pitch.cuda(gpu, non_blocking=True).float()           # (B, L_max)
-        input_lengths = input_lengths.cuda(gpu, non_blocking=True).long()            # (B, )
-        frames_energy = frames_energy.cuda(gpu, non_blocking=True).float()           # (B, T_max)
-        frames_pitch = frames_pitch.cuda(gpu, non_blocking=True).float()             # (B, T_max)
-        mel_specs = mel_specs.cuda(gpu, non_blocking=True).float()                   # (B, n_mel_channels, T_max)
-        output_lengths = output_lengths.cuda(gpu, non_blocking=True).long()          # (B, )
-        speaker_ids = speaker_ids.cuda(gpu, non_blocking=True).long()                # (B, )
-        
+        if gpu_avail:
+            symbols = symbols.cuda(gpu, non_blocking=True).long()                        # (B, L_max)
+            durations_float = durations_float.cuda(gpu, non_blocking=True).float()       # (B, L_max)
+            durations_int = durations_int.cuda(gpu, non_blocking=True).long()            # (B, L_max)
+            symbols_energy = symbols_energy.cuda(gpu, non_blocking=True).float()         # (B, L_max)
+            symbols_pitch = symbols_pitch.cuda(gpu, non_blocking=True).float()           # (B, L_max)
+            input_lengths = input_lengths.cuda(gpu, non_blocking=True).long()            # (B, )
+            frames_energy = frames_energy.cuda(gpu, non_blocking=True).float()           # (B, T_max)
+            frames_pitch = frames_pitch.cuda(gpu, non_blocking=True).float()             # (B, T_max)
+            mel_specs = mel_specs.cuda(gpu, non_blocking=True).float()                   # (B, n_mel_channels, T_max)
+            output_lengths = output_lengths.cuda(gpu, non_blocking=True).long()          # (B, )
+            speaker_ids = speaker_ids.cuda(gpu, non_blocking=True).long()                # (B, )
+        else:
+            symbols = symbols.long()                        # (B, L_max)
+            durations_float = durations_float.float()       # (B, L_max)
+            durations_int = durations_int.long()            # (B, L_max)
+            symbols_energy = symbols_energy.float()         # (B, L_max)
+            symbols_pitch = symbols_pitch.float()           # (B, L_max)
+            input_lengths = input_lengths.long()            # (B, )
+            frames_energy = frames_energy.float()           # (B, T_max)
+            frames_pitch = frames_pitch.float()             # (B, T_max)
+            mel_specs = mel_specs.float()                   # (B, n_mel_channels, T_max)
+            output_lengths = output_lengths.long()          # (B, )
+            speaker_ids = speaker_ids.long()                # (B, )
+            
         # create inputs and targets
         inputs = (symbols, durations_float, durations_int, symbols_energy, symbols_pitch, input_lengths,
                   frames_energy, frames_pitch, mel_specs, output_lengths, speaker_ids)
@@ -807,7 +830,10 @@ class DaftExprt(nn.Module):
             int_durs = torch.LongTensor(duration_to_integer(durations_float, hparams))  # (L_max, )
             durations_int[line_idx, symbols_idx] = int_durs
         # put on GPU
-        durations_int = durations_int.cuda(duration_preds.device, non_blocking=True).long()  # (B, L_max)
+        if gpu_avail:
+            durations_int = durations_int.cuda(duration_preds.device, non_blocking=True).long()  # (B, L_max)
+        else:
+            durations_int = durations_int.long()  # (B, L_max)
         
         return duration_preds, durations_int
     
@@ -910,7 +936,10 @@ class DaftExprt(nn.Module):
         symbols_upsamp, weights = self.gaussian_upsampling(enc_outputs, duration_preds, durations_int, energy_preds, pitch_preds, input_lengths)
         # get sequence output length for each element in the batch
         output_lengths = torch.sum(durations_int, dim=1)  # (B, )
-        output_lengths = output_lengths.cuda(symbols_upsamp.device, non_blocking=True).long()  # (B, )
+        if gpu_avail:
+            output_lengths = output_lengths.cuda(symbols_upsamp.device, non_blocking=True).long()  # (B, )
+        else:
+            output_lengths = output_lengths.long()  # (B, )
         assert(torch.max(output_lengths) == symbols_upsamp.size(1))
         # decode output sequence and predict mel-specs
         mel_spec_preds = self.frame_decoder(symbols_upsamp, decoder_film, output_lengths)  # (B, nb_mels, T_max)
