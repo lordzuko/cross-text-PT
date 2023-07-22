@@ -482,14 +482,14 @@ if __name__ == "__main__":
     print(phonemeized_sents)
     style_bank = os.path.join(PROJECT_ROOT, 'scripts', 'style_bank', 'english')
     # ref_path = "/scratch/space1/tc046/lordzuko/work/data/raw_data/BC2013_daft_orig/CB/wavs/CB-EM-01-05.wav"
-    # ref_path = "/scratch/space1/tc046/lordzuko/work/data/raw_data/BC2013_daft_orig/CB/wavs/CB-EM-04-96.wav"
-    ref_path = "/scratch/space1/tc046/lordzuko/work/data/raw_data/BC2013_daft_orig/CB/wavs/CB-EM-04-100.wav"
+    ref_path = "/scratch/space1/tc046/lordzuko/work/data/raw_data/BC2013_daft_orig/CB/wavs/CB-EM-04-96.wav"
+    # ref_path = "/scratch/space1/tc046/lordzuko/work/data/raw_data/BC2013_daft_orig/CB/wavs/CB-EM-04-100.wav"
     ref_parameters = extract_reference_parameters(ref_path, hparams)
 
     dur_factor = 1 #1.25  # decrease speed
     pitch_transform = 'add'  # pitch shift
-    pitch_factor = 0 #50  # 50Hz
-    energy_factor = None
+    pitch_factor = 0  # 50Hz
+    energy_factor = 1
     # add duration factors for each symbol in the sentence
     dur_factors = [] if dur_factor is not None else None
     energy_factors = [] if energy_factor is not None else None
