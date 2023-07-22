@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import os
 import random
@@ -11,18 +12,21 @@ import uuid
 import torch
 import librosa
 import numpy as np
-
+from scipy.io import wavfile
 
 from shutil import copyfile
 from shutil import rmtree
 
+MAX_WAV_VALUE = 32768.0
 
 FILE_ROOT = os.path.dirname(os.path.realpath(__file__))
+PROJECT_ROOT = os.path.dirname(FILE_ROOT)
 FILE_ROOT = os.path.join(FILE_ROOT, "tmp")
 os.makedirs(FILE_ROOT, exist_ok=True)
-PROJECT_ROOT = os.path.dirname(FILE_ROOT)
 os.environ['PYTHONPATH'] = os.path.join(PROJECT_ROOT, 'src')
 sys.path.append(os.path.join(PROJECT_ROOT, 'src'))
+
+
 
 from daft_exprt.generate import extract_reference_parameters, generate_mel_specs
 from daft_exprt.extract_features import extract_energy, extract_pitch, mel_spectrogram_HiFi, rescale_wav_to_float32
@@ -33,6 +37,8 @@ from daft_exprt.cleaners import collapse_whitespace, text_cleaner
 from daft_exprt.symbols import ascii, eos, punctuation, whitespace
 from daft_exprt.utils import chunker
 
+from hifi_gan.models import Generator
+from hifi_gan import AttrDict
 
 _logger = logging.getLogger(__name__)
 random.seed(1234)
@@ -69,6 +75,46 @@ def get_model(chkpt_path):
                     'restarting from checkpoints.\n')
     
     return model, hparams
+
+
+def vocoder_infer(mels, vocoder, lengths=None):
+
+    with torch.no_grad():
+        wavs = vocoder(mels).squeeze(1)
+
+    wavs = (
+        wavs.cpu().numpy() * MAX_WAV_VALUE
+    ).astype("int16")
+    wavs = [wav for wav in wavs]
+
+    for i in range(len(mels)):
+        if lengths is not None:
+            wavs[i] = wavs[i][: lengths[i]]
+
+    return wavs
+
+
+def get_vocoder(config_path, chkpt_path):
+    with open(config_path, "r") as f:
+        config = json.load(f)
+        config = AttrDict(config)
+
+    vocoder = Generator(config)
+
+    if torch.cuda.is_available():
+        ckpt = torch.load(chkpt_path)
+    else:
+        ckpt = torch.load(chkpt_path, map_location=torch.device('cpu'))
+    
+    vocoder.load_state_dict(ckpt["generator"])
+    vocoder.eval()
+    vocoder.remove_weight_norm()
+
+    if torch.cuda.is_available():
+        vocoder.to(f"cuda:{0}")
+
+    return vocoder
+
 
 def get_dictionary(hparams):
     dictionary = hparams.mfa_dictionary
@@ -398,9 +444,9 @@ def generate_batch_mel_specs(model, batch_sentences, batch_refs, batch_dur_facto
     weights = alignments
 
     # transfer data to cpu and convert to numpy array
-    duration_preds, durations_int, energy_preds, pitch_preds, \
-    input_lengths, mel_spec_preds, output_lengths, weights = to_cpu(duration_preds, 
-                durations_int, energy_preds, pitch_preds, input_lengths, mel_spec_preds, output_lengths, weights)
+    # duration_preds, durations_int, energy_preds, pitch_preds, \
+    # input_lengths, mel_spec_preds, output_lengths, weights = to_cpu(duration_preds, 
+    #             durations_int, energy_preds, pitch_preds, input_lengths, mel_spec_preds, output_lengths, weights)
     
     # save preds for each element in the batch
     predictions = {}
@@ -423,21 +469,26 @@ def generate_batch_mel_specs(model, batch_sentences, batch_refs, batch_dur_facto
 
 if __name__ == "__main__":
     chkpt_path = "/work/tc046/tc046/lordzuko/work/daft-exprt/trainings/daft_bc2013_v1/checkpoints/DaftExprt_best"
+    config_path = "/work/tc046/tc046/lordzuko/work/daft-exprt/hifi_gan/config_v1.json"
+    vocoder_chkpt_path = "/work/tc046/tc046/lordzuko/work/daft-exprt/trainings/hifigan/checkpoints/g_00100000"
     model, hparams = get_model(chkpt_path)
+    vocoder = get_vocoder(config_path, vocoder_chkpt_path)
     dictionary = get_dictionary(hparams)
-    print(model)
+    print(vocoder)
     text = "it is possible to wake up a man who sleeps but not who clings to sleep while fully awake."
     sentences = [text]
     phonemeized_sents = prepare_sentences_for_inference(sentences,dictionary, hparams)
     filenames = ["a.wav"]
     print(phonemeized_sents)
     style_bank = os.path.join(PROJECT_ROOT, 'scripts', 'style_bank', 'english')
-    ref_path = "/scratch/space1/tc046/lordzuko/work/data/raw_data/BC2013_daft_orig/CB/wavs/CB-EM-01-05.wav"
+    # ref_path = "/scratch/space1/tc046/lordzuko/work/data/raw_data/BC2013_daft_orig/CB/wavs/CB-EM-01-05.wav"
+    # ref_path = "/scratch/space1/tc046/lordzuko/work/data/raw_data/BC2013_daft_orig/CB/wavs/CB-EM-04-96.wav"
+    ref_path = "/scratch/space1/tc046/lordzuko/work/data/raw_data/BC2013_daft_orig/CB/wavs/CB-EM-04-100.wav"
     ref_parameters = extract_reference_parameters(ref_path, hparams)
 
-    dur_factor = 1.25  # decrease speed
+    dur_factor = 1 #1.25  # decrease speed
     pitch_transform = 'add'  # pitch shift
-    pitch_factor = 50  # 50Hz
+    pitch_factor = 0 #50  # 50Hz
     energy_factor = None
     # add duration factors for each symbol in the sentence
     dur_factors = [] if dur_factor is not None else None
@@ -469,4 +520,11 @@ if __name__ == "__main__":
     batch_predictions = generate_mel_specs(model, phonemeized_sents, speaker_ids, refs,
                        hparams, dur_factors, energy_factors, pitch_factors, batch_size, filenames)
     
-    print(batch_predictions)
+    
+    for k, v in batch_predictions.items():
+        print(v[4].shape)
+        mels = v[4].unsqueeze(0) #.transpose(1,2)
+        print(mels.shape)
+        wavs = vocoder_infer(mels, vocoder, lengths=None)
+        
+        wavfile.write(os.path.join("./", "{}".format(k)), hparams.sampling_rate, wavs[0])
