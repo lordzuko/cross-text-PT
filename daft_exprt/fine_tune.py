@@ -10,11 +10,11 @@ import torch
 
 from scipy.io.wavfile import write
 
-from daft_exprt.data_loader import prepare_data_loaders
-from daft_exprt.extract_features import mel_spectrogram_HiFi, rescale_wav_to_float32
-from daft_exprt.hparams import HyperParams
-from daft_exprt.model import DaftExprt
-from daft_exprt.utils import estimate_required_time
+from .data_loader import prepare_data_loaders
+from .extract_features import mel_spectrogram_HiFi, rescale_wav_to_float32
+from .hparams import HyperParams
+from .model import DaftExprt
+from .utils import estimate_required_time
 
 
 _logger = logging.getLogger(__name__)

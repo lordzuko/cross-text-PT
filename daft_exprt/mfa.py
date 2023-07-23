@@ -8,10 +8,10 @@ import tgt
 from shutil import move, rmtree
 from pathlib import Path
 
-from daft_exprt.cleaners import text_cleaner
-from daft_exprt.symbols import MFA_SIL_WORD_SYMBOL, MFA_SIL_PHONE_SYMBOLS, MFA_UNK_WORD_SYMBOL, \
+from .cleaners import text_cleaner
+from .symbols import MFA_SIL_WORD_SYMBOL, MFA_SIL_PHONE_SYMBOLS, MFA_UNK_WORD_SYMBOL, \
     MFA_UNK_PHONE_SYMBOL, SIL_WORD_SYMBOL, SIL_PHONE_SYMBOL
-from daft_exprt.utils import launch_multi_process
+from .utils import launch_multi_process
 
 
 _logger = logging.getLogger(__name__)

@@ -5,8 +5,8 @@ import torch
 
 from torch.utils.tensorboard import SummaryWriter
 
-from daft_exprt.extract_features import duration_to_integer
-from daft_exprt.utils import histogram_plot, plot_2d_data, scatter_plot
+from .extract_features import duration_to_integer
+from .utils import histogram_plot, plot_2d_data, scatter_plot
 
 
 class DaftExprtLogger(SummaryWriter):

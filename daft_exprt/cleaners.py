@@ -2,7 +2,7 @@ import re
 
 from unidecode import unidecode
 
-from daft_exprt.normalize_numbers import normalize_numbers
+from .normalize_numbers import normalize_numbers
 
 
 '''
