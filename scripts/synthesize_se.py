@@ -23,8 +23,12 @@ FILE_ROOT = os.path.dirname(os.path.realpath(__file__))
 PROJECT_ROOT = os.path.dirname(FILE_ROOT)
 FILE_ROOT = os.path.join(FILE_ROOT, "tmp")
 os.makedirs(FILE_ROOT, exist_ok=True)
-os.environ['PYTHONPATH'] = os.path.join(PROJECT_ROOT, 'src')
-sys.path.append(os.path.join(PROJECT_ROOT, 'src'))
+# os.environ['PYTHONPATH'] = os.path.join(PROJECT_ROOT, 'src')
+# sys.path.append(os.path.join(PROJECT_ROOT, 'src'))
+
+os.environ['PYTHONPATH'] = PROJECT_ROOT
+sys.path.append(PROJECT_ROOT)
+
 
 
 

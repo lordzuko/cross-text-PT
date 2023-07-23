@@ -6,7 +6,7 @@ import uuid
 
 import numpy as np
 
-from daft_exprt.utils import launch_multi_process
+from .utils import launch_multi_process
 
 
 _logger = logging.getLogger(__name__)

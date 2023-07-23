@@ -9,8 +9,11 @@ from subprocess import call
 
 # ROOT directory
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-os.environ['PYTHONPATH'] = os.path.join(PROJECT_ROOT, 'src')
-sys.path.append(os.path.join(PROJECT_ROOT, 'src'))
+os.environ['PYTHONPATH'] = PROJECT_ROOT
+sys.path.append(PROJECT_ROOT)
+
+# os.environ['PYTHONPATH'] = os.path.join(PROJECT_ROOT, 'src')
+# sys.path.append(os.path.join(PROJECT_ROOT, 'src'))
 
 from daft_exprt.create_sets import create_sets
 from daft_exprt.extract_features import check_features_config_used, extract_features
