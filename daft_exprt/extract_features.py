@@ -17,8 +17,8 @@ from librosa.filters import mel as librosa_mel_fn
 from scipy.io import wavfile
 import pyworld as pw
 
-from daft_exprt.symbols import ascii, eos, punctuation, SIL_WORD_SYMBOL, whitespace
-from daft_exprt.utils import launch_multi_process
+from .symbols import ascii, eos, punctuation, SIL_WORD_SYMBOL, whitespace
+from .utils import launch_multi_process
 
 
 _logger = logging.getLogger(__name__)

@@ -11,8 +11,11 @@ from shutil import copyfile
 
 FILE_ROOT = os.path.dirname(os.path.realpath(__file__))
 PROJECT_ROOT = os.path.dirname(FILE_ROOT)
-os.environ['PYTHONPATH'] = os.path.join(PROJECT_ROOT, 'src')
-sys.path.append(os.path.join(PROJECT_ROOT, 'src'))
+# os.environ['PYTHONPATH'] = os.path.join(PROJECT_ROOT, 'src')
+# sys.path.append(os.path.join(PROJECT_ROOT, 'src'))
+os.environ['PYTHONPATH'] = PROJECT_ROOT
+sys.path.append(PROJECT_ROOT)
+
 
 from daft_exprt.generate import extract_reference_parameters, generate_mel_specs, prepare_sentences_for_inference
 from daft_exprt.hparams import HyperParams

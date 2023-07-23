@@ -19,14 +19,14 @@ from shutil import copyfile
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import Adam
 
-from daft_exprt.data_loader import prepare_data_loaders
-from daft_exprt.extract_features import FEATURES_HPARAMS, check_features_config_used
-from daft_exprt.generate import extract_reference_parameters, prepare_sentences_for_inference, generate_mel_specs
-from daft_exprt.hparams import HyperParams
-from daft_exprt.logger import DaftExprtLogger
-from daft_exprt.loss import DaftExprtLoss
-from daft_exprt.model import DaftExprt
-from daft_exprt.utils import get_nb_jobs
+from .data_loader import prepare_data_loaders
+from .extract_features import FEATURES_HPARAMS, check_features_config_used
+from .generate import extract_reference_parameters, prepare_sentences_for_inference, generate_mel_specs
+from .hparams import HyperParams
+from .logger import DaftExprtLogger
+from .loss import DaftExprtLoss
+from .model import DaftExprt
+from .utils import get_nb_jobs
 
 
 _logger = logging.getLogger(__name__)

@@ -8,7 +8,7 @@ from torch.autograd import Function
 from torch.distributions import Normal
 from torch.nn.parameter import Parameter
 
-from daft_exprt.extract_features import duration_to_integer
+from .extract_features import duration_to_integer
 
 gpu_avail = torch.cuda.is_available()
 

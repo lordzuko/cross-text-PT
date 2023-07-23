@@ -14,11 +14,11 @@ import torch
 from scipy.io import wavfile
 from shutil import rmtree
 
-from daft_exprt.cleaners import collapse_whitespace, text_cleaner
-from daft_exprt.extract_features import extract_energy, extract_pitch, mel_spectrogram_HiFi, rescale_wav_to_float32
-from daft_exprt.griffin_lim import griffin_lim_reconstruction_from_mel_spec
-from daft_exprt.symbols import ascii, eos, punctuation, whitespace
-from daft_exprt.utils import chunker, launch_multi_process, plot_2d_data
+from .cleaners import collapse_whitespace, text_cleaner
+from .extract_features import extract_energy, extract_pitch, mel_spectrogram_HiFi, rescale_wav_to_float32
+from .griffin_lim import griffin_lim_reconstruction_from_mel_spec
+from .symbols import ascii, eos, punctuation, whitespace
+from .utils import chunker, launch_multi_process, plot_2d_data
 
 
 _logger = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ import sys
 
 from pathlib import Path
 
-from daft_exprt.symbols import pad, symbols_english
+from .symbols import pad, symbols_english
 
 
 _logger = logging.getLogger(__name__)
