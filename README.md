@@ -1,4 +1,12 @@
+
+
 <!-- omit in toc -->
+# Improving the Appropriateness in Cross-Text Prosody Transfer using Human Supervision
+Prosody is a critical factor in conveying attitude, emotion and more. Recently there has been a research shift in the Text-to-Speech (TTS) domain, away from improving perceived naturalness towards modelling expressive and appropriate prosody. Prosody Transfer (PT) is one approach that has been widely studied in this context. PT involves transferring prosody from one reference utterance to an arbritrary target text. This can be challenging because the target text can possibly be linguistically different from the reference text. This often results in synthesised speech that is perceived as unnatural.
+We propose to address this issue in cross-text PT through human-in-the-loop (HitL) supervision. Our work combines a reference encoder based on a state-of-the-art PT model with an intuitive web-based interface for facilitating HitL supervision. Anno- tators are tasked with modifying word-level acoustic features to improve the prosody of the output. Through subjective and objective evaluations, our work demonstrates an improvement in perceived prosodic appropriateness and naturalness of utterances that have undergone HitL supervision. The findings offer insights into and introduce a quantitative method for assessing cross-text PT.
+Our detailed analysis of participant behaviour offers useful insights into designing HitL systems. Surprisingly, we found that participant effort is inversely correlated with perceived prosodic appropriateness and naturalness. Given these results, we hypoth- esise what might explain them and discuss what should be considered for successful deployment of HitL systems in TTS.
+
+---
 # Daft-Exprt: Cross-Speaker Prosody Transfer on Any Text for Expressive Speech Synthesis
 
 <!-- omit in toc -->
